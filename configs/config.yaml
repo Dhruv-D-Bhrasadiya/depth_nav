@@ -1,26 +1,73 @@
 system:
   target_fps: 15
   use_gpu: true
+  enable_logging: true
+  log_path: "../logs/run_log.csv"
 
 models:
   yolo:
     weights: "yolov8n.pt"
     confidence_threshold: 0.5
-    classes: [0, 56, 57, 58, 59, 60, 62]  # person, chair, couch, potted plant, bed, dining table, tv
+    # Removed hardcoded classes to allow full COCO dataset dynamically
   midas:
     model_type: "MiDaS_small"  # Options: DPT_Large, DPT_Hybrid, MiDaS_small
+
+semantic_groups:
+  dynamic_obstacles:
+    - person
+    - dog
+    - cat
+    - horse
+    - sheep
+    - cow
+    - elephant
+    - bear
+    - zebra
+    - giraffe
+    - bicycle
+    - motorcycle
+  large_static:
+    - car
+    - truck
+    - bus
+    - train
+    - airplane
+  small_static:
+    - chair
+    - table
+    - bench
+    - stop sign
+    - fire hydrant
+    - couch
+    - bed
+    - dining table
+  unknown:
+    - default
+
+group_properties:
+  dynamic_obstacles:
+    weight: 3.0
+    min_distance: 1.0
+  large_static:
+    weight: 2.0
+    min_distance: 0.8
+  small_static:
+    weight: 1.0
+    min_distance: 0.5
+  unknown:
+    weight: 0.5
+    min_distance: 0.5
 
 fusion:
   min_depth: 0.0
   max_depth: 10.0  # Simulated max distance in meters
   margin: 10       # Padding inside bounding box to extract depth
+  epsilon: 0.1     # Prevents division by zero in risk calculation
 
 navigation:
   critical_person_distance: 1.5  # meters
   obstacle_distance: 2.0         # meters
+  stop_threshold: 3.0            # Max risk sum to trigger STOP if all regions high
   regions:
     left_ratio: 0.33
     right_ratio: 0.66
-  risk_weights:
-    0: 2.0  # person has higher weight
-    default: 1.0

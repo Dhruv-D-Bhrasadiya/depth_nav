@@ -32,7 +32,7 @@ graph TD
 4. The initial run will automatically download MiDaS and YOLOv8 weights to your torch/ultralytics cache.
 
 ## How to Run
-- **On a Webcam**
+- **On a Webcam (via USB or integrated)**
   ```bash
   cd scripts
   python run_pipeline.py --source 0
@@ -41,6 +41,16 @@ graph TD
   ```bash
   cd scripts
   python run_pipeline.py --source path_to_video.mp4
+  ```
+- **On a Phone Camera (iPhone / Android) via Wi-Fi**
+  You can stream directly from your phone to your laptop's robot inference system in real-time. No code changes are required since the system dynamically parses IP camera URLs.
+  1. Download an IP Webcam app on your phone (e.g., **IP Webcam** for Android or **DroidCam / EpocCam** for iPhone).
+  2. Ensure your phone and laptop are on the exact same Wi-Fi network.
+  3. Start the server on the phone app. It will display a network URL (like `http://192.168.1.100:8080`).
+  4. Run the pipeline passing the video HTTP endpoint:
+  ```bash
+  cd scripts
+  python run_pipeline.py --source "http://192.168.1.100:8080/video"
   ```
 
 ## Evaluation Metrics Details

@@ -14,6 +14,7 @@ from fusion.fusion_engine import FusionEngine
 from navigation.decision_engine import DecisionEngine
 from utils.visualization import draw_overlay
 from utils.helpers import FPSCounter
+from utils.logger import SimulationLogger
 
 def load_config(config_path):
     with open(config_path, "r") as f:
@@ -45,6 +46,15 @@ def main():
     
     fps_counter = FPSCounter()
     
+    # Initialize logger
+    logger = None
+    log_cfg = config.get('system', {}).get('enable_logging', False)
+    if log_cfg:
+        raw_log_path = config.get('system', {}).get('log_path', '../logs/run_log.csv')
+        log_path = os.path.join(os.path.dirname(__file__), raw_log_path)
+        logger = SimulationLogger(log_path)
+        print(f"[INFO] Logging initialized. Saving to: {log_path}")
+
     # Source Setup
     source = int(args.source) if args.source.isdigit() else args.source
     cap = cv2.VideoCapture(source)
@@ -58,50 +68,62 @@ def main():
     frames_processed = 0
     start_time = time.time()
     
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            print("[INFO] End of video stream.")
-            break
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                print("[INFO] End of video stream.")
+                break
+                
+            frame = cv2.resize(frame, (640, 480))
             
-        frame = cv2.resize(frame, (640, 480))
-        
-        # 1. Inference: Detection & Depth
-        detections = detector.detect(frame)
-        depth_map = depth_estimator.estimate_depth(frame)
-        
-        # 2. Sensor Fusion
-        fused_objects, distance_map = fusion.process(frame, detections, depth_map)
-        
-        # 3. Decision Making
-        action, reasoning = decision.get_action(fused_objects, distance_map)
-        cmd_vel = decision.to_velocity_command(action)
-        
-        # 4. Visualization
-        vis_frame = draw_overlay(frame, fused_objects, distance_map, action, reasoning)
-        fps_counter.update()
-        vis_frame = fps_counter.draw(vis_frame)
-        
-        # Overlay cmd_vel
-        cv2.putText(vis_frame, f"Vel: v={cmd_vel['linear_x']:.2f}, w={cmd_vel['angular_z']:.2f}",
-                    (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-        
-        cv2.imshow("Depth-Aware Robot Navigation", vis_frame)
-        
-        frames_processed += 1
-        
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+            # 1. Inference: Detection & Depth
+            detections = detector.detect(frame)
+            depth_map = depth_estimator.estimate_depth(frame)
             
-    # Print basic evaluation
-    total_time = time.time() - start_time
-    if total_time > 0:
-        print("\n--- Pipeline Evaluation ---")
-        print(f"Total frames processed: {frames_processed}")
-        print(f"Average FPS: {frames_processed / total_time:.2f}")
+            # 2. Sensor Fusion (Semantic Classification + Localization)
+            fused_objects, distance_map = fusion.process(frame, detections, depth_map)
             
-    cap.release()
-    cv2.destroyAllWindows()
+            # 3. Decision Making (Risk-based geometric algorithms)
+            action, reasoning, region_risks = decision.get_action(fused_objects, distance_map)
+            cmd_vel = decision.to_velocity_command(action)
+            
+            # Log Results dynamically per frame
+            if logger:
+                logger.log(frames_processed, action, reasoning, fused_objects)
+            
+            # 4. Visualization & Overlay Hooking
+            vis_frame = draw_overlay(frame, fused_objects, distance_map, action, reasoning, region_risks)
+            fps_counter.update()
+            vis_frame = fps_counter.draw(vis_frame)
+            
+            # Overlay cmd_vel
+            cv2.putText(vis_frame, f"Vel: v={cmd_vel['linear_x']:.2f}, w={cmd_vel['angular_z']:.2f}",
+                        (20, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+            
+            cv2.imshow("Depth-Aware Robot Navigation", vis_frame)
+            
+            frames_processed += 1
+            
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+                
+    except KeyboardInterrupt:
+        print("\n[INFO] Manual termination detected.")
+        
+    finally:
+        # Wrap down execution elegantly
+        total_time = time.time() - start_time
+        if total_time > 0:
+            print("\n--- Pipeline Evaluation ---")
+            print(f"Total frames processed: {frames_processed}")
+            print(f"Average FPS: {frames_processed / total_time:.2f}")
+                
+        cap.release()
+        cv2.destroyAllWindows()
+        if logger:
+            logger.close()
+            print("[INFO] File logger closed securely.")
 
 if __name__ == "__main__":
     main()

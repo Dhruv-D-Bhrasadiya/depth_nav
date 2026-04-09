@@ -9,11 +9,10 @@ class ObjectDetector:
         self.model = YOLO(self.config['weights'])
         self.model.to(self.device)
         self.conf_thresh = self.config['confidence_threshold']
-        self.classes = self.config['classes']
 
     def detect(self, frame):
-        # Run inference
-        results = self.model(frame, conf=self.conf_thresh, classes=self.classes, verbose=False)
+        # Run inference dynamically capturing all detected COCO classes
+        results = self.model(frame, conf=self.conf_thresh, verbose=False)
         boxes_list = []
         for r in results:
             boxes = r.boxes
