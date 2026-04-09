@@ -1,0 +1,54 @@
+# Depth-Aware Robot Navigation and Collision Avoidance System
+
+## Problem Statement
+Autonomous robots must reliably perceive their environment, detect obstacles, and navigate without collisions. Standard 2D object detection provides identifying information (what objects are present) but lacks vital 3D spatial awareness (how far away they are). This restricts effective decision-making in dynamic environments. 
+
+## Approach
+This project solves the above problem by creating a unified pipeline integrating 2D Object Detection (YOLOv8) with Monocular Depth Estimation (MiDaS). 
+- **YOLOv8** extracts real-time bounding boxes and semantic classes (e.g., person, chair).
+- **MiDaS** generates a dense depth map for every frame.
+- A **Fusion Engine** maps the bounding boxes onto the depth map to extract reliable object distance and spatial positioning (left, center, right).
+- A **Decision Engine** analyzes the obstacles, calculates risk scores, and delegates high-level actions (`MOVE_FORWARD`, `TURN_LEFT`, `STOP`) mapped to robot velocity commands.
+
+## Architecture Diagram
+```mermaid
+graph TD
+    A[Camera Frame] --> B[YOLOv8 Detector]
+    A --> C[MiDaS Depth Estimator]
+    B --> D[Fusion Engine]
+    C --> D
+    D --> E[Decision Engine]
+    E --> F[Robot Controller / Velocity Cmd]
+    E --> G[Visualization Overlay]
+```
+
+## Setup Instructions
+1. Clone the repository and navigate to the project root `depth_nav`.
+2. Ensure you have Python 3.10+ installed.
+3. Install requirements:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. The initial run will automatically download MiDaS and YOLOv8 weights to your torch/ultralytics cache.
+
+## How to Run
+- **On a Webcam**
+  ```bash
+  cd scripts
+  python run_pipeline.py --source 0
+  ```
+- **On a Video File**
+  ```bash
+  cd scripts
+  python run_pipeline.py --source path_to_video.mp4
+  ```
+
+## Evaluation Metrics Details
+- **Collision Avoidance Rate**: To measure this mathematically, one could log cases where `robot_distance_to_obstacle < threshold` but no `STOP` command was fired.
+- **Decision Accuracy**: Precision of predicting `TURN_LEFT` when only left is clear versus ground truth human commands.
+- **FPS Performance**: Tracked dynamically using `utils/helpers.py:FPSCounter` directly on the screen output and printed out via the main evaluation when the process terminates.
+
+## Future Improvements
+- **Object Tracking:** Integrating DeepSORT or SORT to track obstacles over subsequent frames could improve time-to-collision estimation and temporal stability.
+- **Sensor Fusion:** In real-world robots, fusing physical LiDAR or ultrasonic sensors with standard camera depth provides a more metric-accurate approach.
+- **ROS2 Native Implementation:** Porting this Python pipeline into a dedicated ROS2 node architecture using pub/sub topics (`sensor_msgs/Image`, `geometry_msgs/Twist`).

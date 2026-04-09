@@ -1,0 +1,26 @@
+system:
+  target_fps: 15
+  use_gpu: true
+
+models:
+  yolo:
+    weights: "yolov8n.pt"
+    confidence_threshold: 0.5
+    classes: [0, 56, 57, 58, 59, 60, 62]  # person, chair, couch, potted plant, bed, dining table, tv
+  midas:
+    model_type: "MiDaS_small"  # Options: DPT_Large, DPT_Hybrid, MiDaS_small
+
+fusion:
+  min_depth: 0.0
+  max_depth: 10.0  # Simulated max distance in meters
+  margin: 10       # Padding inside bounding box to extract depth
+
+navigation:
+  critical_person_distance: 1.5  # meters
+  obstacle_distance: 2.0         # meters
+  regions:
+    left_ratio: 0.33
+    right_ratio: 0.66
+  risk_weights:
+    0: 2.0  # person has higher weight
+    default: 1.0
