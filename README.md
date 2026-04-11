@@ -1,5 +1,15 @@
 # Depth-Aware Robot Navigation and Collision Avoidance System
 
+## Soft Computing Mini Project: Fuzzy Logic Enhanced Navigation
+
+This project demonstrates soft computing principles by incorporating **Fuzzy Logic** into the decision-making process for autonomous navigation. The fuzzy logic system handles uncertainty in obstacle risk assessment, providing more adaptive and human-like decision making compared to traditional crisp threshold approaches.
+
+### Fuzzy Logic Features:
+- Fuzzy sets for risk levels (low, medium, high)
+- Fuzzy rules for action selection
+- Defuzzification for crisp action outputs
+- Improved handling of sensor noise and environmental uncertainty
+
 ## Problem Statement
 Autonomous robots must reliably perceive their environment, detect obstacles, and navigate without collisions. Standard 2D object detection provides identifying information (what objects are present) but lacks vital 3D spatial awareness (how far away they are). This restricts effective decision-making in dynamic environments. 
 

@@ -6,3 +6,4 @@ ultralytics
 timm
 pyyaml
 numpy
+scikit-fuzzy
