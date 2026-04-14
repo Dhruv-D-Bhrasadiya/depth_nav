@@ -54,3 +54,6 @@ datasets/
 
 # Environment variables
 .env
+
+# csv
+*.cvs
